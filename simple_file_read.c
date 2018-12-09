@@ -1,6 +1,6 @@
 /*
  * Author: Ramprasad Ramshankar 
- * Alias: ramprams
+ * Alias: diyinfosec
  * Date: 09-Dec-2018
  * Purpose: Simple program to show how to read a file using Windows API
  * Language:  C
