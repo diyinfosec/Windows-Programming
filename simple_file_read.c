@@ -21,6 +21,7 @@ int main(int argc, char *argv[])
 		1. Obtain "file name with path" as an input to the program
 		2. Use CreateFile to obtain a handle to the file.
 		3. Use ReadFile to read the contents of the file READ_BUFFER_SIZE bytes at a time. 
+		4. Close the file handle using CloseHandle.
 	*/
 
 	// Note: If you are using Visual Studio to run the program then give the commandline arguments as per:
@@ -32,19 +33,6 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	
-
-	/*
-		Function template for CreateFile:
-			HANDLE CreateFileA(
-			LPCSTR                lpFileName,
-			DWORD                 dwDesiredAccess,
-			DWORD                 dwShareMode,
-			LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-			DWORD                 dwCreationDisposition,
-			DWORD                 dwFlagsAndAttributes,
-			HANDLE                hTemplateFile
-			);
-	*/
 	
 	//Getting the name of the file from program input
 	LPSTR lpFileName = argv[1];
@@ -62,32 +50,25 @@ int main(int argc, char *argv[])
 	/*
 		If the CreateFile function fails, the return value is INVALID_HANDLE_VALUE.
 		Using GetLastError() to print the error details.
-
 	*/
 	if (hFile == INVALID_HANDLE_VALUE) {
 		fprintf(stderr, "Cannot open input file. Error: %x\n", GetLastError());
 		return 2;
 	}
 
-	
-	/*
-		Function template for ReadFile
-		BOOL ReadFile(
-			HANDLE       hFile,
-			LPVOID       lpBuffer,
-			DWORD        nNumberOfBytesToRead,
-			LPDWORD      lpNumberOfBytesRead,
-			LPOVERLAPPED lpOverlapped
-		)
-	*/
-	
+
 	//Declaring the variables required for calling ReadFile. 
 	BOOL bErrorFlag;
 	DWORD dwBytesToRead = READ_BUFFER_SIZE;	
 	LPTSTR lpvDataBuffer[READ_BUFFER_SIZE] = {0};
 	DWORD dwActualBytesRead=1;
 
-	/*To read an entire file you need to call the ReadFile function repeatedly till the actual number of bytes reduces to 0*/
+	/*
+	 The first call to ReadFile reads the first "dwBytesToRead" bytes from the file. Any subsequent calls will start reading from 
+	 the file pointer position at end of the previous call. Even if EOF is reached ReadFile will continue the attempt to read the file
+	 i.e. bErrorFlag will still return true. You need to explicitly check and stop calling ReadFile if the number of bytes read by ReadFile
+	 becomes zero. 
+	*/
 	do
 	{
 		bErrorFlag=ReadFile(
@@ -101,6 +82,16 @@ int main(int argc, char *argv[])
 		printf("\n Bytes actually read %d", dwActualBytesRead);
 	} while (bErrorFlag = true && dwActualBytesRead > 0);
 
-	//Simply added a getchar() to avoid automatically terminating the process after printing all the output. 
+	/*
+	 Though not explicitly required, you should close the File handle when you are done reading the file. Some good reasons
+	 to do so can be found here: https://stackoverflow.com/questions/29535973/is-it-necessary-to-close-files-after-reading-only-in-any-programming-language
+	*/
+	if (CloseHandle(hFile)==0)
+	{
+		fprintf(stderr, " Unable to close File Handle: %x\n", GetLastError());
+		return 3;
+	}
+	
+	// Added a getchar() to avoid automatically terminating the process after printing all the output. 
 	getchar();
 }
